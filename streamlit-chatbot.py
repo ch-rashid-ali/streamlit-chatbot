@@ -22,7 +22,20 @@ st.button("Click Me!")
 
 st.subheader("Chatbot Form")
 user_input = st.text_input("Enter your query:")
+user_age = st.number_input(
+    "Enter your age", 
+    min_value=0, 
+    max_value=120, 
+    value=25
+)
 
+user_resume = st.file_uploader(
+    "Upload Resume", 
+    type=["pdf", "docx"]
+)
+
+if st.checkbox("I agree to the terms and conditions"):
+    st.write("Thank you for agreeing to the terms and conditions")
 if st.button("Submit"):
     response = client.models.generate_content(
         model='gemini-2.5-flash', contents=user_input
