@@ -13,8 +13,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 2. AUTOMATIC API KEY COUPLING (Directly from your secrets.toml)
-# Aapki file mein key jis naam se bhi ho, yeh system khud hi use connect kar lega
+# 2. AUTOMATIC API KEY COUPLING
 api_key = ""
 try:
     if "GEMINI_API_KEY" in st.secrets:
@@ -26,53 +25,45 @@ try:
 except Exception:
     pass
 
-# API ko configure karna bina kisi warning message ke
 if api_key:
     genai.configure(api_key=api_key)
 
-# Initialize Session States for Active Chat and History Titles
+# Initialize Session States
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 if "recent_chats" not in st.session_state:
     st.session_state.recent_chats = []
 
-# 3. SIDEBAR (Left Menu - Real-time Chat Tracker Only)
+# 3. SIDEBAR (Left Menu - Real-time Chat Tracker)
 with st.sidebar:
     st.subheader("✨ Gemini Empire")
     st.write("---")
     
-    # New Chat Button
     if st.button("➕ New Chat", use_container_width=True):
         st.session_state.chat_history = []
     
     st.write("---")
     st.subheader("🕒 Recent Chat History")
     
-    # User jo bhi sawal poochega, uska title automatic yahan list hota jayega
     if st.session_state.recent_chats:
         for title in reversed(st.session_state.recent_chats):
             st.caption(f"💬 {title}")
     else:
-        st.info("No recent chats yet. Start typing below!")
+        st.info("No recent chats yet.")
 
-    st.write("---")
-    with st.expander("⚙️ Settings"):
-        st.selectbox("🎨 Theme", ["Dark Mode", "Light Mode"])
-
-# 4. MAIN HEADER & TOP BAR
+# 4. MAIN HEADER
 col_title, col_upgrade = st.columns([8, 2])
 with col_title:
     st.title("Gemini ⚡")
 with col_upgrade:
     st.button("✨ Upgrade to Advanced", type="primary", use_container_width=True)
 
-str_line = "---"
-st.write(str_line)
+st.write("---")
 
-# 5. MODEL SELECTOR DROPDOWN
+# 5. MODEL SELECTOR DROPDOWN (Using Standard Pro/Flash Production IDs)
 model_mapping = {
-    "Gemini 2.5 Flash (Latest & Fast)": "gemini-2.5-flash",
-    "Gemini 1.5 Pro (Thinking Level)": "gemini-1.5-pro"
+    "Gemini Flash (Fast & Stable)": "gemini-1.5-flash",
+    "Gemini Pro (Advanced Thinking)": "gemini-1.5-pro"
 }
 selected_ui_model = st.selectbox("🤖 Select Model Level:", list(model_mapping.keys()))
 actual_model_id = model_mapping[selected_ui_model]
@@ -84,31 +75,27 @@ for chat in st.session_state.chat_history:
         st.write(chat["content"])
 
 # 7. CHAT INPUT BAR
-st.write(str_line)
+st.write("---")
 input_col, mic_col = st.columns([9, 1])
 
 with input_col:
     user_query = st.chat_input("📌 Ask Gemini...")
 with mic_col:
-    st.button("🎙️", help="Voice Typing")
+    st.button("🎙️")
 
 # 8. CORE AI PROCESSING
 if user_query:
-    # Key check validation block
     if not api_key:
-        st.error("❌ Error: API Key aapki secrets.toml file mein nahi mili. Meharbani karke file check karein ya key confirm karein.")
+        st.error("❌ Error: API Key aapki Secrets mein nahi mili.")
     else:
-        # Append to left sidebar summary title
         short_title = user_query[:25] + "..." if len(user_query) > 25 else user_query
         if short_title not in st.session_state.recent_chats:
             st.session_state.recent_chats.append(short_title)
             
-        # Display user message
         with st.chat_message("user"):
             st.write(user_query)
         st.session_state.chat_history.append({"role": "user", "content": user_query})
         
-        # Generate response
         with st.chat_message("assistant"):
             response_placeholder = st.empty()
             try:
@@ -118,15 +105,13 @@ if user_query:
                 
                 response_placeholder.write(ai_resp)
                 st.session_state.chat_history.append({"role": "assistant", "content": ai_resp})
-                
-                # App ko immediate refresh karna taake side history sync ho jaye
                 st.rerun()
                 
             except Exception as e:
-                response_placeholder.error(f"API Error (400/Invalid): {str(e)}")
+                response_placeholder.error(f"Error: {str(e)}")
 
 # 9. FOOTER
 st.markdown(
-    '<div class="location-footer">📍 Lahore, Pakistan • From your IP address • <span style="color:#4285F4; cursor:pointer;">Update location</span></div>', 
+    '<div class="location-footer">📍 Lahore, Pakistan • From your IP address</div>', 
     unsafe_allow_html=True
 )
