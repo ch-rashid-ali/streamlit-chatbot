@@ -62,8 +62,8 @@ st.write("---")
 
 # 5. MODEL SELECTOR DROPDOWN (Using Standard Pro/Flash Production IDs)
 model_mapping = {
-    "Gemini Flash (Fast & Stable)": "gemini-1.5-flash",
-    "Gemini Pro (Advanced Thinking)": "gemini-1.5-pro"
+    "Gemini Flash (Fast & Stable)": "gemini-2.5-flash",
+    "Gemini Pro (Advanced Thinking)": "gemini-3.5-pro"
 }
 selected_ui_model = st.selectbox("🤖 Select Model Level:", list(model_mapping.keys()))
 actual_model_id = model_mapping[selected_ui_model]
