@@ -1,43 +1,56 @@
-import os
 import streamlit as st
-from google import genai
-from google.genai import types
+import google.generativeai as genai
+import os
 from dotenv import load_dotenv
 
-load_dotenv() 
+# .env file se variables ko system environment mein load karein
+load_dotenv()
 
-client = genai.Client(api_key=os.getenv("GOOGLE_GEMINI_API_KEY"))
+# System environment se GOOGLE_API_KEY nikalein
+api_key = os.getenv("GOOGLE_API_KEY")
 
-st.title("Hello Streamlit!")
+# Agar .env se na mile toh check karein kya kisi aur naam se hai
+if not api_key:
+    api_key = os.getenv("GEMINI_API_KEY")
 
-st.write("This is a simple Streamlit app.")
+# Agar phir bhi na mile toh safe check ke liye Streamlit secrets dekhein bina crash kiye
+if not api_key and hasattr(st, "secrets"):
+    api_key = st.secrets.get("GOOGLE_API_KEY")
 
-# Sliders, Buttons , CChatbot form
+# Check karein ke API Key mili ya nahi
+if not api_key:
+    st.error("Error: Boss, aapki .env file mein 'GOOGLE_API_KEY' nahi mili. Please file check karein!")
+    st.stop()
 
-st.slider("Select Pay Range", 0, 100, 50)
+# Gemini ko configure karein (Fast model: gemini-1.5-flash)
+genai.configure(api_key=api_key)
+model = genai.GenerativeModel('gemini-2.5-flash')
 
-st.button("Click Me!")
+st.title("My Gemini AI Chatbot 🤖")
 
-# Chatbot form - Query Input, Submit Button, Response Display
+# Chat history initialize karein
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-st.subheader("Chatbot Form")
-user_input = st.text_input("Enter your query:")
-user_age = st.number_input(
-    "Enter your age", 
-    min_value=0, 
-    max_value=120, 
-    value=25
-)
+# Purani chat screen par dikhane ke liye
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.write(message["content"])
 
-user_resume = st.file_uploader(
-    "Upload Resume", 
-    type=["pdf", "docx"]
-)
+# User se input lene ke liye box
+user_query = st.chat_input("Boss, Gemini AI se kuch bhi poocho...")
 
-if st.checkbox("I agree to the terms and conditions"):
-    st.write("Thank you for agreeing to the terms and conditions")
-if st.button("Submit"):
-    response = client.models.generate_content(
-        model='gemini-2.5-flash', contents=user_input
-    )
-    st.write(response.text) 
+if user_query:
+    # 1. User ka message screen par dikhao
+    with st.chat_message("user"):
+        st.write(user_query)
+    st.session_state.messages.append({"role": "user", "content": user_query})
+
+    # 2. Gemini AI se jawab lena
+    with st.chat_message("assistant"):
+        try:
+            response = model.generate_content(user_query)
+            st.write(response.text)
+            st.session_state.messages.append({"role": "assistant", "content": response.text})
+        except Exception as e:
+            st.error(f"Gemini API Error: {e}")
